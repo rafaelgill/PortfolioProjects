@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/Users/rafael/Downloads/project.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8616"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,12:maincovid_deaths"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">-- Select all the data on the DATABASE
+SELECT *
+FROM covid_deaths
+WHERE continent IS NOT NULL
+ORDER BY 3, 4;
+
+
+-- Select Data that we are going to be starting with
+SELECT Location, date, total_cases, new_cases, total_deaths, population
+FROM covid_deaths
+WHERE continent IS NOT NULL
+ORDER BY Location, date;
+
+
+-- Total Cases vs Total Deaths
+-- Shows likelihood of dying if you contract covid in your country
+SELECT Location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS DeathPercentage
+FROM covid_deaths
+WHERE Location LIKE '%states%' AND continent IS NOT NULL
+ORDER BY Location, date;
+
+
+-- Total Cases vs Population
+-- Shows what percentage of population infected with Covid
+SELECT Location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS DeathPercentage
+FROM covid_deaths
+WHERE Location LIKE '%states%' AND continent IS NOT NULL
+ORDER BY Location, date;
+
+
+-- Countries with Highest Infection Rate compared to Population
+SELECT Location, date, Population, total_cases, (total_cases/population)*100 AS PercentPopulationInfected
+FROM covid_deaths
+ORDER BY Location, date;
+
+
+-- Countries with Highest Death Count per Population
+SELECT Location, MAX(cast(Total_deaths as int)) as TotalDeathCount
+FROM covid_deaths
+WHERE continent IS NOT NULL 
+GROUP BY Location
+ORDER BY TotalDeathCount DESC;
+
+
+-- GLOBAL NUMBERS
+SELECT SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast(new_deaths as int))/SUM(New_Cases)*100 as DeathPercentage
+FROM covid_deaths
+WHERE continent IS NOT NULL;
+
+
+-- Total Population vs Vaccinations
+-- Shows Percentage of Population that has recieved at least one Covid Vaccine
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+       SUM(CAST(vac.new_vaccinations AS INTEGER)) OVER (PARTITION BY dea.Location ORDER BY dea.location, dea.Date) as RollingPeopleVaccinated
+FROM covid_deaths dea
+JOIN covid_vaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+WHERE dea.continent IS NOT NULL 
+ORDER BY dea.location, dea.date;
+
+
+-- Create a view named 'PopulationVsVaccinations'
+CREATE VIEW PopulationVsVaccinations AS
+SELECT dea.location, dea.date, dea.population, vac.new_vaccinations
+FROM covid_deaths dea
+JOIN covid_vaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date;
+
+
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
